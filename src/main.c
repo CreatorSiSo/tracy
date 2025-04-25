@@ -27,11 +27,12 @@ int main(int argc, char* argv[]) {
         printf("%s\n", argv[i]);
     }
 
-    uint32_t width = 100;
-    uint32_t height = 100;
+    uint32_t width = 1920;
+    uint32_t height = 1080;
     Image image = image_new(width, height);
 
-    size_t num_chunks = 8;
+    size_t num_chunks = 16;
+#pragma omp parallel for
     for (size_t i = 0; i < num_chunks; i++) {
         Chunk chunk = image_chunk_by_index(image, num_chunks, i);
         chunk_foreach_pixel(chunk, shader);
