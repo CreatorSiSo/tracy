@@ -2,6 +2,7 @@
 
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 #include <zlib.h>
 
 #include "color.h"
@@ -106,7 +107,34 @@ uint8_t* compress_png_data(
     return compressed;
 }
 
-void write_png(uint8_t* data, size_t size, uint32_t width, uint32_t height) {
+uint8_t* encode_data(Image image, size_t* encoded_size) {
+    size_t scanlines_size = image_size(image) + image.height;
+    uint8_t* scanlines = malloc(scanlines_size);
+
+    size_t scanline_data_size = image.width * 4;
+    size_t scanline_size = scanline_data_size + 1;
+
+    for (uint32_t y = 0; y < image.height; y++) {
+        uint8_t* scanline_start = scanlines + y * scanline_size;
+        scanline_start[0] = 0x00;
+
+        uint8_t* dest = scanline_start + 1;
+        uint8_t* src = image.data + y * scanline_data_size;
+        memcpy(dest, src, scanline_data_size);
+    }
+
+    uint8_t* compressed_data =
+        compress_png_data(scanlines, scanlines_size, encoded_size);
+    if (!compressed_data) {
+        printf("Compression failed.\n");
+        exit(EXIT_FAILURE);
+    }
+
+    free(scanlines);
+    return compressed_data;
+}
+
+void write_png(Image image) {
     FILE* file = fopen("./out.png", "wb");
     if (file == NULL) {
         printf("Error opening file ./out.png!");
@@ -124,21 +152,18 @@ void write_png(uint8_t* data, size_t size, uint32_t width, uint32_t height) {
         0x00,                    // filter method
         0x00,                    // interlace method
     };
-    write_uint32_be(ihdr_data, width);
-    write_uint32_be(ihdr_data + 4, height);
+    write_uint32_be(ihdr_data, image.width);
+    write_uint32_be(ihdr_data + 4, image.height);
 
-    write_chunk(file, u8"IHDR", ihdr_data, 13);
-    size_t compressed_size;
-    uint8_t* compressed_data = compress_png_data(data, size, &compressed_size);
-    if (!compressed_data) {
-        printf("Compression failed.\n");
-        exit(EXIT_FAILURE);
-    }
+    write_chunk(file, (const uint8_t*)"IHDR", ihdr_data, 13);
 
-    write_chunk(file, u8"IDAT", compressed_data, compressed_size);
-    free(compressed_data);
+    size_t encoded_size;
+    uint8_t* encoded_data = encode_data(image, &encoded_size);
 
-    write_chunk(file, u8"IEND", NULL, 0);
+    write_chunk(file, (const uint8_t*)"IDAT", encoded_data, encoded_size);
+    free(encoded_data);
+
+    write_chunk(file, (const uint8_t*)"IEND", NULL, 0);
 
     fclose(file);
 }

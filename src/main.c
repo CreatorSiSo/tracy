@@ -2,28 +2,21 @@
 #include <stdlib.h>
 
 #include "color.h"
+#include "image.h"
 #include "png.h"
 
-uint8_t* generate_image_data(
-    size_t* size, uint32_t width, uint32_t height, Color color
-) {
-    *size = (1 + width * 4) * height;
-    uint8_t* ptr = malloc(*size);
+Color shader(uint32_t x, uint32_t y, uint32_t width, uint32_t height) {
+    float relative_x = (float)x / (float)width;
+    float relative_y = (float)y / (float)height;
 
-    for (size_t i = 0; i < height; i++) {
-        uint8_t* line_start = ptr + i * (1 + width * 4);
+    Color color = {
+        .r = (uint8_t)(relative_x * 255.0),
+        .g = (uint8_t)(relative_y * 255.0),
+        .b = 0x00,
+        .a = 0xff,
+    };
 
-        line_start[0] = 0x00;  // no filter
-        for (size_t j = 0; j < width; j++) {
-            uint8_t* color_start = line_start + 1 + j * 4;
-            color_start[0] = color.r;
-            color_start[1] = color.g;
-            color_start[2] = color.b;
-            color_start[3] = color.a;
-        }
-    }
-
-    return ptr;
+    return color;
 }
 
 int main(int argc, char* argv[]) {
@@ -34,15 +27,16 @@ int main(int argc, char* argv[]) {
         printf("%s\n", argv[i]);
     }
 
-    Color fill = color_from_uint32(0xff00ffff);
-    debug_color(fill);
+    uint32_t width = 100;
+    uint32_t height = 100;
+    Image image = image_new(width, height);
 
-    uint32_t width = 1000;
-    uint32_t height = 1000;
+    size_t num_chunks = 8;
+    for (size_t i = 0; i < num_chunks; i++) {
+        Chunk chunk = image_chunk_by_index(image, num_chunks, i);
+        chunk_foreach_pixel(chunk, shader);
+    }
 
-    size_t image_len;
-    uint8_t* image_ptr = generate_image_data(&image_len, width, height, fill);
-
-    write_png(image_ptr, image_len, width, height);
-    free(image_ptr);
+    write_png(image);
+    image_free(image);
 }
