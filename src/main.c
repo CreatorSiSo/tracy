@@ -5,6 +5,7 @@
 #include "gltf.h"
 #include "image.h"
 #include "png.h"
+#include "scene.h"
 
 float clamp(float value) {
     return value < 0.0 ? 0.0 : (value > 1.0 ? 1.0 : value);
@@ -50,8 +51,8 @@ int main(int argc, char* argv[]) {
     }
 
     cgltf_data* data = load_gltf_file(argv[1]);
-    printf("Type: %u\n", data->file_type);
-    printf("Meshes: %zu\n", data->meshes_count);
+    Scene scene = scene_from_gltf_data(data);
+    scene_debug(&scene);
     cgltf_free(data);
 
     uint32_t width = 1920;

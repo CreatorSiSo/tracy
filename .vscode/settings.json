@@ -1,0 +1,6 @@
+{
+	"files.associations": {
+		"*.wml": "ron",
+		"cglm.h": "c"
+	}
+}

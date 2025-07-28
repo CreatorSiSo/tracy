@@ -44,18 +44,18 @@ uint32_t crc32_type_and_data(
 }
 
 // Writes a big-endian 32-bit integer
-inline void write_uint32_be(uint8_t* ptr, uint32_t value) {
+void write_uint32_be(uint8_t* ptr, uint32_t value) {
     ptr[0] = (value >> 24) & 0xFF;
     ptr[1] = (value >> 16) & 0xFF;
     ptr[2] = (value >> 8) & 0xFF;
     ptr[3] = value & 0xFF;
 }
 
-inline void write_bytes(FILE* file, const uint8_t* ptr, size_t size) {
+void write_bytes(FILE* file, const uint8_t* ptr, size_t size) {
     fwrite(ptr, sizeof(uint8_t), size, file);
 }
 
-inline void write_uint32(FILE* file, uint32_t value) {
+void write_uint32(FILE* file, uint32_t value) {
     uint8_t bytes[4];
     write_uint32_be(bytes, value);
     write_bytes(file, bytes, 4);

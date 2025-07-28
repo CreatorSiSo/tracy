@@ -1,0 +1,3 @@
+[submodule "include/cglm"]
+	path = include/cglm
+	url = git@github.com:recp/cglm.git
